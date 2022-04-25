@@ -12,4 +12,8 @@ class CustomRenderer(JSONRenderer):
             response = {
                 "data": {"id": data.id, "message": "Product added"}
             }
+        elif renderer_context['request'].method == 'DEL':
+            response = {
+                "data": {"id": data.id, "message": "Product deleted"}
+            }
         return super(CustomRenderer, self).render(response, accepted_media_type, renderer_context)
