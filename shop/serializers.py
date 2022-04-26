@@ -3,7 +3,7 @@ from .models import Product
 from shop.models import User
 
 
-class ProductListSerializer(serializers.HyperlinkedModelSerializer):
+class ArticleSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Product
         fields = '__all__'
@@ -15,7 +15,11 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('username', 'email', 'password',)
+        fields = ('fio', 'email', 'password',)
 
-    def create(self, validated_data):
-        return User.objects.create_user(**validated_data)
+    def save(self):
+        account = User(fio=self.validated_data['fio'],
+                           email=self.validated_data['email'],
+                           password=self.validated_data['password'])
+        account.save()
+        return account
