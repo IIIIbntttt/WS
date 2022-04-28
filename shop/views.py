@@ -1,60 +1,76 @@
-from rest_framework.generics import GenericAPIView
+from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from .renderers import CustomRenderer
-from rest_framework import response, status, permissions
-from .serializers import ArticleSerializer, RegisterSerializer
+from rest_framework import serializers
+from .serializers import ArticleSerializer
 from rest_framework import generics
-from .models import Product, User
-import json
+from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST
+from rest_framework import permissions
+
+from .models import *
 
 
-class RegisterAPIView(GenericAPIView):
-    permission_classes = [permissions.AllowAny]
-    authentication_classes = []
-    queryset = User.objects.all()
-    serializer_class = RegisterSerializer
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('fio', 'email', 'password')
+
+
+class RegisterView(APIView):
+    http_method_names = ['post']
+
+    def post(self, *args, **kwargs):
+        serializer = UserSerializer(data=self.request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data['email']
+            user = User(**serializer.validated_data)
+            # ToDo убрать строку с set_password
+            user.set_password(serializer.validated_data['password'])
+            user.save()
+            return Response(status=HTTP_201_CREATED)
+        return Response(status=HTTP_400_BAD_REQUEST, data={'data': {'errors': serializer.errors}})
+
+
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField()
+
+
+class CustomAuthToken(APIView):
+    http_method_names = ['post']
 
     def post(self, request):
-        serializer = self.serializer_class(data=request.data)
-
+        serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            return response.Response(serializer.data, status=status.HTTP_201_CREATED)
+            try:
+                user = User.objects.get(email=serializer.validated_data['email'])
+            except:
+                return Response(status=HTTP_400_BAD_REQUEST, data={'data': {'errors': ''}})
 
-        return response.Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-# class ProductListView(generics.ListCreateAPIView):
-#     serializer_class = ProductListSerializer
-#     renderer_classes = [CustomRenderer]
-#
-#     def get_queryset(self):
-#         products = Product.objects.all()
-#         return products
-#
-#     def post(self, request, *args, **kwargs):
-#         data = json.load(request)
-#         p = Product(
-#             name=data['name'],
-#             description=data['description'],
-#             price=data['price']
-#         )
-#         p.save()
-#         return Response(data={"id": p.id, "message": "Product added"}, status=status.HHTP_204_NO_CONTENT)
+            if not user.check_password(serializer.validated_data['password']):
+                return Response('asdasd')
+            token, created = Token.objects.get_or_create(user=user)
+            return Response({
+                'user_token': token.key,
+                'user_id': user.pk,
+                'email': user.email
+            })
+        return Response(status=HTTP_400_BAD_REQUEST, data={'data': {'errors': serializer.errors}})
 
 
 class ArticlesListView(generics.ListAPIView):  # ListAPIView Используется только для чтения: GET
     """Вывод списка продуктов"""
     permission_classes = [permissions.AllowAny]
+    queryset = Article.objects.all()
     serializer_class = ArticleSerializer
-    renderer_classes = [CustomRenderer]
-    queryset = Product.objects.all()  # Набор записей с которыми мы рабAотаем в этой view
+    renderer_classes = [CustomRenderer]  # Набор записей с которыми мы рабAотаем в этой view
 
 
 class ArticleCreateView(generics.CreateAPIView):
     """Создание продукта"""
     permission_classes = [permissions.AllowAny]
-    queryset = Product.objects.all()
+    queryset = Article.objects.all()
     serializer_class = ArticleSerializer
     renderer_classes = [CustomRenderer]
 
@@ -62,6 +78,6 @@ class ArticleCreateView(generics.CreateAPIView):
 class ArticleDetailView(generics.RetrieveUpdateDestroyAPIView):  # RetrieveUpdateDestroyAPIView -
     """Вывод отдельного продукта"""
     permission_classes = [permissions.AllowAny]
-    queryset = Product.objects.all()
+    queryset = Article.objects.all()
     serializer_class = ArticleSerializer
     renderer_classes = [CustomRenderer]
