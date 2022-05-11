@@ -18,9 +18,16 @@ class User(AbstractUser):
 
 class Article(models.Model):
     name = models.CharField(max_length=255)
-    description = models.CharField(max_length=255)
+    description = models.TextField()
     price = models.IntegerField()
-    weight = models.FloatField()
 
-    def __str__(self):
-        return self.name
+
+class Cart(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    product = models.ForeignKey(Article, on_delete=models.CASCADE)
+
+
+class Order(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    products = models.TextField(validators=[MinLengthValidator(3)])
+    order_price = models.IntegerField()
