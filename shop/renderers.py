@@ -10,11 +10,11 @@ class CustomRenderer(JSONRenderer):
             }
         elif renderer_context['request'].method == 'POST':
             response = {
-                "data": {"id": data["id"], "message": "Article added"}
+                "data": {"id": data["id"], "message": "Product added"}
             }
         elif renderer_context['request'].method == 'DELETE':
             response = {
-                "data": {"id": data["id"], "message": "Article deleted"}
+                "data": {"id": data["id"], "message": "Product deleted"}
             }
         elif renderer_context['request'].method == 'PATCH':
             response = {"data": data}

@@ -9,9 +9,6 @@ def custom_exception_handler(exc, context):
     elif exc.default_code == 'invalid':
         return JsonResponse({"error": {"code": 422, "message": "Validation error", "errors": exc.detail}},
                             status=status.HTTP_422_UNPROCESSABLE_ENTITY)
-    elif exc.default_code == 'not_authenticated' or exc.default_code == 'authentication_failed':
-        return JsonResponse({"error": {"code": 403, "message": "Login failed"}},
-                            status=status.HTTP_403_FORBIDDEN)
     elif exc.default_code == 'permission_denied':
         return JsonResponse({"error": {"code": 403, "message": "Forbidden for you"}},
                             status=status.HTTP_403_FORBIDDEN)

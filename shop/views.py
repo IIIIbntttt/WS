@@ -6,9 +6,11 @@ from .renderers import *
 from .serializers import *
 from rest_framework import generics, permissions
 from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN
-
-
 from .models import *
+
+
+def forbidden_for_you(request=None):
+    return JsonResponse({"error": {"code": 403, "message": "Forbidden for you"}}, status=403)
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -25,7 +27,6 @@ class RegisterView(APIView):
         if serializer.is_valid():
             email = serializer.validated_data['email']
             user = User(**serializer.validated_data)
-            # ToDo убрать строку с set_password
             user.set_password(serializer.validated_data['password'])
             user.save()
             return Response(status=HTTP_201_CREATED)
@@ -67,32 +68,32 @@ class CustomAuthToken(APIView):
         return Response(status=HTTP_400_BAD_REQUEST, data={'data': {'errors': serializer.errors}})
 
 
-class ArticlesListView(generics.ListAPIView):  # ListAPIView Используется только для чтения: GET
+class ProductsListView(generics.ListAPIView):  # ListAPIView Используется только для чтения: GET
     """Вывод списка продуктов"""
     permission_classes = [permissions.AllowAny]
-    queryset = Article.objects.all()
-    serializer_class = ArticleSerializer
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
     renderer_classes = [CustomRenderer]  # Набор записей с которыми мы рабAотаем в этой view
 
 
-class ArticleCreateView(generics.CreateAPIView):
+class ProductsCreateView(generics.CreateAPIView):
     """Создание продукта"""
     permission_classes = [permissions.AllowAny]
-    queryset = Article.objects.all()
-    serializer_class = ArticleSerializer
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
     renderer_classes = [CustomRenderer]
 
 
-class ArticleDetailView(generics.RetrieveUpdateDestroyAPIView):  # RetrieveUpdateDestroyAPIView -
+class ProductsDetailView(generics.RetrieveUpdateDestroyAPIView):  # RetrieveUpdateDestroyAPIView -
     """Вывод отдельного продукта"""
     permission_classes = [permissions.AllowAny]
-    queryset = Article.objects.all()
-    serializer_class = ArticleSerializer
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
     renderer_classes = [CustomRenderer]
 
 
 class CartListView(generics.ListAPIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
     serializer_class = CartGetSerializer
     renderer_classes = [CartRenderer]
 
@@ -104,7 +105,7 @@ class CartListView(generics.ListAPIView):
 
 class CartCreateDeleteView(generics.DestroyAPIView, generics.CreateAPIView):
     renderer_classes = [CartRenderer]
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
     serializer_class = CartSerializer
 
     def get_queryset(self, *args, **kwargs):
@@ -130,7 +131,7 @@ class CartCreateDeleteView(generics.DestroyAPIView, generics.CreateAPIView):
 
 
 class OrderCreateView(generics.ListCreateAPIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
     serializer_class = OrderSerializer
     renderer_classes = [OrderRenderer]
 
